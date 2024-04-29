@@ -19,8 +19,6 @@ app.use(logger)
 
 app.use(cors(corsOptions))
 
-app.use(cors())
-
 app.use(express.json()) //allows app to receive and parce json data
 
 app.use(cookieParser())
