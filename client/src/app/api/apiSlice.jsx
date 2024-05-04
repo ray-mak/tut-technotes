@@ -6,4 +6,5 @@ export const apiSlice = createApi({
     endpoints: builder => ({})
 })
 
+//fetchBaseQuery is where our server is
 //provided endpoints with empty builder. Will attach extended slices that will attach to this ApiSlice for notes and users

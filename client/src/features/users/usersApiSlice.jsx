@@ -12,7 +12,6 @@ export const usersApiSlice = apiSlice.injectEndpoints({ //use the apiSlice that 
             validateStatus: (response, result) => { 
                 return response.status === 200 && !result.isError //make sure we have 200 status and there is not an error
             },
-            keepUnusedDataFor: 5, //5 seconds (60 seconds is default when app is deployed), if data referred to in cache or needs new request
             transformResponse: responseData => { //important since we're working with MongoDB
                 const loadedUsers = responseData.map(user => {
                     user.id = user._id
@@ -30,12 +29,49 @@ export const usersApiSlice = apiSlice.injectEndpoints({ //use the apiSlice that 
                     ]
                 } else return [{type: 'User', id: 'LIST'}]
             }
+        }),
+        addNewUser: builder.mutation({ //mutation is used for defining endpoints that modify data on the server
+            query: inititalUserData =>( {
+                url: '/users',
+                method: 'POST',
+                body: {
+                    ...inititalUserData
+                }
+            }),
+            invalidatesTags: [  //forces cache in RTK query to update
+                {type: "User", id: "LIST"} //user list will be invalidated, which means the corresponding cached data should be refetched the next time it is accessed.
+            ]
+        }),
+        updateUser: builder.mutation({
+            query: inititalUserData => ({
+                url: "/users",
+                method: "PATCH",
+                body: {
+                    ...inititalUserData
+                }
+            }),
+            invalidatesTags: (result, error, arg) => [ //invalidating tags, but not the list
+                { type: "User", id: arg.id} // We can specify the id of the user we are passing in with the arg parameter
+            ]
+        }),
+        deleteUser: builder.mutation({
+            query: ({ id }) => ({
+                url: "/users",
+                method: "DELETE",
+                body: { id }
+            }),
+            invalidatesTags: (result, error, arg) => [
+                { type: "User", id: arg.id}
+            ]
         })
     })
 })
 //RTK query will create a hook based on the above endpoint automatically, so we export that hook
 export const {
-    useGetUsersQuery
+    useGetUsersQuery,
+    useAddNewUserMutation,  //exported to NewUserForm.jsx
+    useUpdateUserMutation,  //exported to EditUserForm.jsx
+    useDeleteUserMutation   //exported to EditUserForm.jsx
 } = usersApiSlice
 
 //create selectors
@@ -52,7 +88,7 @@ const selectUsersData = createSelector( //user createSelector which was imported
 //getSelectors creates these selectors and we rename them with aliases using destructuring
 export const {
     selectAll: selectAllUsers,
-    selectById: selectUserById, 
+    selectById: selectUserById, //exported to EditUser.jsx
     selecIds: selectUserIds
     //pass in a selector that returns the users slice of state
 } = usersAdapter.getSelectors(state => selectUsersData(state) ?? initialState)
