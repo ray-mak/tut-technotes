@@ -72,7 +72,7 @@ export const notesApiSlice = apiSlice.injectEndpoints({
 
 export const {
     useGetNotesQuery,
-    useAddNewNoteMutation,  
+    useAddNewNoteMutation,  //exported to NewNoteForm.jsx
     useUpdateNoteMutation,
     useDeleteNoteMutation
 } = notesApiSlice
