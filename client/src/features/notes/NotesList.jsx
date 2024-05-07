@@ -1,14 +1,16 @@
 import { useGetNotesQuery } from "./notesApiSlice"
 import Note from "./Note"
+import useAuth from "../../hooks/useAuth"
 
 export default function NotesList() {
+    const { username, isManager, isAdmin } = useAuth()
     const {
         data: notes,
         isLoading,
         isSuccess,
         isError,
         error
-    } = useGetNotesQuery(null, {
+    } = useGetNotesQuery("notesList", {
         pollingInterval: 15000,
         refetchOnFocus: true,
         refetchOnMountOrArgChange: true
@@ -23,11 +25,16 @@ export default function NotesList() {
     }
 
     if (isSuccess) {
-        const { ids } = notes
+        const { ids, entities } = notes
 
-        const tableContent = ids?.length
-            ? ids.map(noteId => <Note key={noteId} noteId={noteId} />)
-            : null
+        let filteredIds
+        if (isManager || isAdmin) {
+            filteredIds = [...ids]
+        } else {    //if not a manager or admin, ids array filtered, where noteId, (each id passed in) is going to be used on the entity, to identify the entity and see if it matches that username.
+            filteredIds = ids.filter(noteId => entities[noteId].username === username) //means non-admin or manager can only see notes assigned to himself
+        }
+
+        const tableContent = ids?.length && filteredIds.map(noteId => <Note key={noteId} noteId={noteId} />)
 
         content = (
             <table className="table table--notes">

@@ -1,5 +1,5 @@
 import { apiSlice } from "../../app/api/apiSlice"
-import { logOut } from "./authSlice"
+import { logOut, setCredentials } from "./authSlice"
 
 export const authApiSlice = apiSlice.injectEndpoints({
     endpoints: builder => ({
@@ -24,7 +24,9 @@ export const authApiSlice = apiSlice.injectEndpoints({
                     //if we log the data, it will be the message from the rest api we created that says "cookie cleared"
                     //console.log(data)
                     dispatch(logOut())
-                    dispatch(apiSlice.util.resetApiState()) //this is called to clear our the cache
+                    setTimeout(() => {  //fix for useQuery when it doesn't unsibscribe
+                        dispatch(apiSlice.util.resetApiState()) //this is called to clear our the cache
+                    }, 1000)
                 } catch (err) {
                     console.log(err)
                 }
@@ -34,7 +36,17 @@ export const authApiSlice = apiSlice.injectEndpoints({
             query: () => ({
                 url: '/auth/refresh',
                 method: 'GET',
-            })
+            }),
+            async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+                try {
+                    const { data } = await queryFulfilled
+                    console.log(data)   //data is the access token
+                    const { accessToken } = data    //accessToken destructured here
+                    dispatch(setCredentials({ accessToken }))
+                } catch (err) {
+                    console.log(err)
+                }
+            }
         })
     })
 })
@@ -42,5 +54,5 @@ export const authApiSlice = apiSlice.injectEndpoints({
 export const {
     useLoginMutation,
     useSendLogoutMutation, //exported to DashHeader.jsx
-    useRefreshMutation
+    useRefreshMutation      //exported to PersistLogin.jsx
 } = authApiSlice
